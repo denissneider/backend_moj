@@ -1,5 +1,6 @@
 import {createServer} from 'http';
 import express from 'express';
+import cors from 'cors';
 import {connectMongoDb} from './database/connection';
 
 import swaggerUi from 'swagger-ui-express';
@@ -12,6 +13,9 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const app = express()
+
+//enable CORS
+app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
