@@ -2,14 +2,12 @@ name: Backend CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  test-backend:
+  build-backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,19 +23,50 @@ jobs:
       uses: actions/cache@v3
       with:
         path: node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        key: ${{ runner.os }}-backend-${{ hashFiles('package-lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-node-
+          ${{ runner.os }}-backend-
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Upload backend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build
+        path: |
+          ./node_modules/
+          ./
+
+  test-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Cache Node.js modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-backend-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-backend-
 
     - name: Install dependencies
       run: npm ci
 
     - name: Run tests and generate coverage report
-      run: |
-        npm test -- --watchAll=false --coverage
+      run: npm test -- --watchAll=false --coverage
 
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v3
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
       with:
         name: backend-coverage
-        path: ./coverage
+        path: ./coverage/
